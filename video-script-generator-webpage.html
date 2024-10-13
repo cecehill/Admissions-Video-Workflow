@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Script Generator for 8th Grade Admissions</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.js"></script>
+    <style>
+        .hidden { display: none; }
+    </style>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-2xl mx-auto bg-white p-8 rounded shadow-md">
+        <h1 class="text-3xl font-bold mb-6">Video Script Generator</h1>
+        <div id="progress-bar" class="w-full bg-gray-200 rounded-full h-2.5 mb-4">
+            <div id="progress" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
+        </div>
+        <div id="question-container"></div>
+        <div id="script-container" class="hidden">
+            <h2 class="text-2xl font-bold mb-4">Your Generated Script</h2>
+            <textarea id="generated-script" class="w-full h-64 p-2 border rounded" readonly></textarea>
+            <button id="edit-script" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded">Edit Script</button>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            { step: 1, question: "What's your name?", type: "short" },
+            { step: 1, question: "What's a nickname you go by or a fun way people address you?", type: "short" },
+            { step: 1, question: "What's an interesting fact about your name or nickname?", type: "long" },
+            { step: 2, question: "List three things you're passionate about. These can be hobbies, subjects, or activities.", type: "long" },
+            { step: 2, question: "For each passion, explain what drew you to it initially, how it makes you feel when you're engaged in it, and share a specific memory or experience related to this passion.", type: "long" },
+            { step: 3, question: "What's something you enjoy that might surprise people?", type: "long" },
+            { step: 3, question: "Do you have any unique skills or talents, even if they seem 'useless' or silly?", type: "long" },
+            { step: 3, question: "Is there a common object or everyday activity that you find fascinating? Why?", type: "long" },
+            { step: 4, question: "What are three core values that guide your decisions and actions?", type: "long" },
+            { step: 4, question: "Who or what inspires you the most? This could be a family member, a historical figure, or even a concept.", type: "long" },
+            { step: 4, question: "Can you share a brief story about a time when your values or inspiration influenced your actions?", type: "long" },
+            { step: 5, question: "How do your passions and interests reflect your core values?", type: "long" },
+            { step: 5, question: "In what ways do your unique or unexpected traits contribute to who you are as a person?", type: "long" },
+            { step: 5, question: "How do you see your interests and values shaping your future goals or the type of high school experience you're seeking?", type: "long" },
+            { step: 6, question: "What's a catchy or intriguing way you could start your video to grab attention?", type: "long" },
+            { step: 6, question: "Could you demonstrate one of your skills or interests visually in the first few seconds?", type: "long" },
+            { step: 7, question: "What excites you most about starting high school?", type: "long" },
+            { step: 7, question: "How do you hope to grow or what do you hope to achieve in the next four years?", type: "long" },
+            { step: 7, question: "If you could contribute one thing to your future high school community, what would it be?", type: "long" }
+        ];
+
+        let currentQuestion = 0;
+        const answers = [];
+
+        function displayQuestion() {
+            const q = questions[currentQuestion];
+            const container = document.getElementById('question-container');
+            container.innerHTML = `
+                <h2 class="text-xl font-semibold mb-2">Step ${q.step}: ${q.question}</h2>
+                ${q.type === 'short' 
+                    ? `<input type="text" class="w-full p-2 border rounded mb-4" id="answer">`
+                    : `<textarea class="w-full h-32 p-2 border rounded mb-4" id="answer"></textarea>`
+                }
+                <div class="mb-4">
+                    <input type="checkbox" id="na-checkbox" class="mr-2">
+                    <label for="na-checkbox">Not Applicable</label>
+                </div>
+                <button id="next" class="bg-blue-500 text-white px-4 py-2 rounded">Next</button>
+            `;
+            document.getElementById('next').addEventListener('click', nextQuestion);
+            document.getElementById('na-checkbox').addEventListener('change', toggleAnswerField);
+            updateProgressBar();
+        }
+
+        function toggleAnswerField() {
+            const isChecked = document.getElementById('na-checkbox').checked;
+            const answerField = document.getElementById('answer');
+            answerField.disabled = isChecked;
+            if (isChecked) {
+                answerField.value = '';
+            }
+        }
+
+        function nextQuestion() {
+            const isNA = document.getElementById('na-checkbox').checked;
+            const answer = isNA ? "N/A" : document.getElementById('answer').value;
+            answers.push(answer);
+            currentQuestion++;
+            if (currentQuestion < questions.length) {
+                displayQuestion();
+            } else {
+                generateScript();
+            }
+        }
+
+        function updateProgressBar() {
+            const progress = ((currentQuestion + 1) / questions.length) * 100;
+            document.getElementById('progress').style.width = `${progress}%`;
+        }
+
+        function generateScript() {
+            document.getElementById('question-container').classList.add('hidden');
+            document.getElementById('script-container').classList.remove('hidden');
+            
+            // Enhanced script generation
+            const script = [];
+
+            // Introduction
+            if (answers[0] !== "N/A") {
+                script.push(`Hey there! I'm ${answers[0]}${answers[1] !== "N/A" ? `, but my friends call me ${answers[1]}` : ''}.`);
+            }
+            if (answers[2] !== "N/A") {
+                script.push(`Here's a fun fact about me: ${answers[2]}`);
+            }
+
+            // Passions
+            if (answers[3] !== "N/A") {
+                const passions = answers[3].split(',').map(p => p.trim());
+                script.push(`I'm really passionate about a few things. ${passions[0]} is my absolute favorite${passions.length > 1 ? `, and I also love ${passions.slice(1).join(' and ')}` : ''}.`);
+            }
+            if (answers[4] !== "N/A") {
+                script.push(rewritePassionExplanation(answers[4]));
+            }
+
+            // Unique traits
+            if (answers[5] !== "N/A") {
+                script.push(`Now, here's something that might surprise you about me: ${answers[5]}`);
+            }
+            if (answers[6] !== "N/A") {
+                script.push(`I've got this quirky talent for ${answers[6]}. It's not exactly a superpower, but it's definitely unique!`);
+            }
+            if (answers[7] !== "N/A") {
+                script.push(`You know what else? I find ${answers[7]} absolutely fascinating. I know it sounds odd, but hear me out...`);
+            }
+
+            // Values and inspiration
+            if (answers[8] !== "N/A") {
+                const values = answers[8].split(',').map(v => v.trim());
+                script.push(`If I had to sum up what's important to me, I'd say it's ${values.join(', ')}. These values really shape who I am and how I approach life.`);
+            }
+            if (answers[9] !== "N/A") {
+                script.push(`I draw a lot of inspiration from ${answers[9]}.`);
+            }
+            if (answers[10] !== "N/A") {
+                script.push(`In fact, there was this one time when ${rewriteInspirationStory(answers[10])}`);
+            }
+
+            // Connecting passions, values, and future
+            if (answers[11] !== "N/A" || answers[12] !== "N/A" || answers[13] !== "N/A") {
+                script.push(rewriteConnectionStatement(answers[11], answers[12], answers[13]));
+            }
+
+            // Video hook
+            if (answers[14] !== "N/A") {
+                script.push(`[The video opens with: ${answers[14]}]`);
+            }
+            if (answers[15] !== "N/A") {
+                script.push(`In the first few seconds, you'll see me ${answers[15]}`);
+            }
+
+            // Future aspirations
+            if (answers[16] !== "N/A") {
+                script.push(`As I look ahead to high school, I'm most excited about ${answers[16]}`);
+            }
+            if (answers[17] !== "N/A") {
+                script.push(`Over the next four years, my goal is to ${answers[17]}`);
+            }
+            if (answers[18] !== "N/A") {
+                script.push(`If I could bring one thing to my future high school community, it would be ${answers[18]}`);
+            }
+
+            // Conclusion
+            script.push("Thanks for taking the time to get to know me. I'm excited about the possibility of joining your school community!");
+
+            document.getElementById('generated-script').value = script.join('\n\n');
+        }
+
+        function rewritePassionExplanation(input) {
+            const sentences = input.split('.').filter(s => s.trim() !== '');
+            return `Let me tell you a bit more about why these passions mean so much to me. ${sentences[0]}. When I'm ${sentences[1].trim().toLowerCase()}, I feel like I'm in my element. One time, ${sentences[2].trim()}.`;
+        }
+
+        function rewriteInspirationStory(input) {
+            return input.replace(/^I/, 'I remember I').toLowerCase();
+        }
+
+        function rewriteConnectionStatement(passions, traits, future) {
+            let statement = "You know, when I think about it, ";
+            if (passions !== "N/A") {
+                statement += `my passions really do reflect my core values. ${passions} `;
+            }
+            if (traits !== "N/A") {
+                statement += `And those quirky traits I mentioned? They're not just random - they're a big part of what makes me, well, me. ${traits} `;
+            }
+            if (future !== "N/A") {
+                statement += `Looking ahead, I can see how all of this is shaping the kind of high school experience I'm hoping for. ${future}`;
+            }
+            return statement;
+        }
+
+        document.getElementById('edit-script').addEventListener('click', function() {
+            document.getElementById('generated-script').readOnly = false;
+        });
+
+        displayQuestion();
+    </script>
+</body>
+</html>
